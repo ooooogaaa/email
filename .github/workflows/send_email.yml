@@ -1,0 +1,44 @@
+name: QLD Backtest and Email Report (Gmail)
+
+on:
+  workflow_dispatch:  # 수동 실행
+  schedule:
+    - cron: '0 20 * * *'  # 한국시간 오전 5시 (UTC 20시)
+    - cron: '0 9 * * *'   # 한국시간 오후 6시 (UTC 9시)
+
+jobs:
+  backtest-and-email:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install yfinance pandas
+
+      - name: Run QLD Backtest
+        run: python main.py
+
+      - name: Send Email with Gmail SMTP
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "📈 QLD 백테스트 자동 리포트"
+          body: |
+            안녕하세요 👋  
+            GitHub Actions가 자동으로 실행되어  
+            QLD 백테스트 결과를 첨부합니다.
+            실행 시각: ${{ github.event_name }}
+          to: your_target_email@gmail.com
+          from: GitHub Bot <${{ secrets.EMAIL_USERNAME }}>
+          attachments: result.txt
